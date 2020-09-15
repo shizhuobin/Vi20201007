@@ -59,7 +59,7 @@ public class MyService extends Service {
             }
 
 
-            super.handleMessage(msg);
+            //super.handleMessage(msg);
 
 
 /*

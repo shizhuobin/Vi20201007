@@ -106,7 +106,7 @@ public class MyWindow extends LinearLayout implements SurfaceTextureListener {
                 myCamera.setDisplayOrientation(SetDegree(MyWindow.this));
 
                 // 开始预览
-                myCamera.startPreview();
+                //myCamera.startPreview();
                 handler.sendEmptyMessage(BUFFERTAG);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -131,7 +131,7 @@ public class MyWindow extends LinearLayout implements SurfaceTextureListener {
                     Camera.Size size = camera.getParameters().getPreviewSize();
                    // Log.d("size", "hhh Chosen resolution: "+size.width+" "+size.height);
 
-                   // myCamera.stopPreview();
+                    myCamera.stopPreview();
 
                     try{
                         YuvImage image = new YuvImage(data, ImageFormat.NV21, size.width, size.height, null);
@@ -276,8 +276,8 @@ public class MyWindow extends LinearLayout implements SurfaceTextureListener {
                             handler.sendEmptyMessageDelayed(BUFFERTAG1, 1000);
                             break;
                         }
-                        //if (myCamera != null)
-                            //myCamera.startPreview();
+                        if (myCamera != null)
+                            myCamera.startPreview();
                         getPreViewImage();
                         //Log.d("CameraService", "第1次");
                         handler.sendEmptyMessageDelayed(BUFFERTAG, MainActivity.getHz()*1000);
