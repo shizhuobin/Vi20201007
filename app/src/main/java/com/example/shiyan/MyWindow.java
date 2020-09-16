@@ -1,9 +1,11 @@
 package com.example.shiyan;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -33,6 +35,9 @@ import android.widget.LinearLayout;
 
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
+import com.microsoft.projectoxford.face.contract.Emotion;
+import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.rest.ClientException;
 
 import android.content.Intent;
 
@@ -40,8 +45,8 @@ import static java.lang.Thread.sleep;
 
 public class MyWindow extends LinearLayout implements SurfaceTextureListener {
 
-    private final String apiEndpoint = "https://fer-service.cognitiveservices.azure.com/face/v1.0/";
-    private final String subscriptionKey = "1b1dc48b1e4547f9892d83392fe89b0d";
+    private final String apiEndpoint = "https://vi-power.cognitiveservices.azure.cn/face/v1.0/";
+    private final String subscriptionKey = "a2f847cb765f44f592077fa31803f36d";
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint, subscriptionKey);
 
     private int delaytime=1500;
@@ -222,10 +227,23 @@ public class MyWindow extends LinearLayout implements SurfaceTextureListener {
                 @Override
                 public void run() {
                     FileOutputStream fos = null;
+
+                    String jpgname=name;
+                    String jpgpath=path;
+                    Bitmap bitmap=bmp_save;
+                    ByteArrayOutputStream outputStream=null;
+                    ByteArrayInputStream inputStream=null;
+                    outputStream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                    inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+
+                    /*
                     try {
                         fos = new FileOutputStream(file);
                         Log.d("test", "running!!!");
                         bmp_save.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+
+
                         fos.flush();
                         fos.close();
 
@@ -235,19 +253,107 @@ public class MyWindow extends LinearLayout implements SurfaceTextureListener {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    */
+                    System.out.println(1111111111);
+                    Face[] result = new Face[0];
+                    try {
+                        synchronized (faceServiceClient) {
+                            result = faceServiceClient.detect(
+                                    inputStream,
+                                    true,         // returnFaceId
+                                    false,        // returnFaceLandmarks
+                                    //null          // returnFaceAttributes:
+                                    new FaceServiceClient.FaceAttributeType[]{
+                                            FaceServiceClient.FaceAttributeType.Age,
+                                            FaceServiceClient.FaceAttributeType.Gender,
+                                            FaceServiceClient.FaceAttributeType.Emotion,
+                                            FaceServiceClient.FaceAttributeType.Smile,
+                                            FaceServiceClient.FaceAttributeType.Makeup}
 
-  /*                  int t;
-                    Lock lock=new ReentrantLock();
-                    lock.lock();
-                    try{
-                        t=httptime;
-                        httptime++;
-                    }finally{
-                        lock.unlock();
+                            );
+                        }
+                        inputStream.close();
+                    } catch (ClientException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    System.out.println("httptime:"+t);
-*/
+                    System.out.println(22222222);
+                    if(result.length==0)
+                    {
+                        Matrix matrix = new Matrix();
+                        matrix.postRotate(90);
+                        Bitmap bitmap2 = Bitmap.createBitmap(bitmap, 0,0, bitmap.getWidth(),  bitmap.getHeight(), matrix, true);
+                        ByteArrayOutputStream outputStream2= new ByteArrayOutputStream();
+                        bitmap2.compress(Bitmap.CompressFormat.JPEG, 100, outputStream2);
 
+                        ByteArrayInputStream inputStream2 = new ByteArrayInputStream(outputStream2.toByteArray());
+                        result = new Face[0];
+                        try {
+                            synchronized (faceServiceClient) {
+                                result = faceServiceClient.detect(
+                                        inputStream2,
+                                        true,         // returnFaceId
+                                        false,        // returnFaceLandmarks
+                                        //null          // returnFaceAttributes:
+                                        new FaceServiceClient.FaceAttributeType[]{
+                                                FaceServiceClient.FaceAttributeType.Age,
+                                                FaceServiceClient.FaceAttributeType.Gender,
+                                                FaceServiceClient.FaceAttributeType.Emotion,
+                                                FaceServiceClient.FaceAttributeType.Smile,
+                                                FaceServiceClient.FaceAttributeType.Makeup}
+
+                                );
+                            }
+                            inputStream2.close();
+
+
+                        } catch (ClientException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    System.out.println("result.length:"+result.length);
+                    if(result.length!=0) {
+                        Emotion emotion = result[0].faceAttributes.emotion;
+                        String s = jpgname
+                                + " anger:" + emotion.anger
+                                + " contempt:" + emotion.contempt
+                                + " disgust:" + emotion.disgust
+                                + " fear:" + emotion.fear
+                                + " happiness:" + emotion.happiness
+                                + " neutral:" + emotion.neutral
+                                + " sadness:" + emotion.sadness
+                                + " surprise:" + emotion.surprise
+                                + "\n";
+                        System.out.println(s);
+
+
+                        FileWriter fileWritter = null;
+                        try {
+                            fileWritter = new FileWriter(jpgpath + ".txt", true);
+                            fileWritter.write(s);
+                            fileWritter.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else
+                    {
+                        FileWriter fileWritter = null;
+                        try {
+                            fileWritter = new FileWriter(jpgpath+".txt",true);
+                            fileWritter.write(jpgname+" not find face\n");
+                            fileWritter.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+
+/*
                     if (MainActivity.isUpload.equals("是")) {
                         Intent intent = new Intent("com.shi.zhu.bin");
                         intent.putExtra("name", name);
@@ -255,12 +361,12 @@ public class MyWindow extends LinearLayout implements SurfaceTextureListener {
                         intent.putExtra("path", path);
                         context.sendBroadcast(intent);
                     }
-
+*/
                     //myCamera.stopPreview();
                 }
             };
-        runnable.run();
-
+        //runnable.run();
+        new Thread(runnable).start();
     }
 
     public static final int BUFFERTAG = 100;
